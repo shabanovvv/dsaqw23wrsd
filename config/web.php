@@ -7,6 +7,7 @@ $config = [
     'id' => 'basic',
     'name' => 'StoryValut',
     'basePath' => dirname(__DIR__),
+    'language' => 'ru',
     'bootstrap' => ['log'],
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
@@ -28,7 +29,7 @@ $config = [
             'errorAction' => 'site/error',
         ],
         'mailer' => [
-            'class' => \yii\symfonymailer\Mailer::class,
+            'class' => 'yii\swiftmailer\Mailer',
             'viewPath' => '@app/mail',
             // send all mails to a file by default.
             'useFileTransport' => true,
@@ -47,7 +48,9 @@ $config = [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
-                '' => 'post/index'
+                '' => 'post/index',
+                'post/<postId:\d+>/update' => 'post/update',
+                'post/<postId:\d+>/delete' => 'post/delete',
             ],
         ],
     ],

@@ -3,13 +3,17 @@
 namespace app\models;
 
 use app\components\SoftDeleteBehavior;
-
-use \yii\db\ActiveQuery;
+use app\models\Form\PostForm;
+use app\models\Query\PostQuery;
+use Yii;
 use yii\behaviors\TimestampBehavior;
-use \yii\db\ActiveRecord;
+use yii\db\ActiveQuery;
+use yii\db\ActiveRecord;
 
 class Post extends ActiveRecord
 {
+    public bool $isEdit = false;
+
     /**
      * @inheritdoc
      */
@@ -19,13 +23,13 @@ class Post extends ActiveRecord
             'softDelete' => [
                 'class' => SoftDeleteBehavior::class,
                 'deletedAttribute' => 'deleted_at',
-                'value' => date('Y-m-d H:i:s'),
+                'value' => time(),
             ],
             'timestamp' => [
                 'class' => TimestampBehavior::class,
                 'createdAtAttribute' => 'created_at',
                 'updatedAtAttribute' => 'updated_at',
-                'value' => date('Y-m-d H:i:s'),
+                'value' => time(),
             ],
         ];
     }
@@ -38,8 +42,8 @@ class Post extends ActiveRecord
     public function rules(): array
     {
         return [
-            [['name', 'email', 'description'], 'required'],
-            [['email'], 'email'],
+            ...PostCommonRules::rules(),
+            [['ip'], 'ip'],
         ];
     }
 
@@ -48,11 +52,22 @@ class Post extends ActiveRecord
      */
     public static function find($modeSoftDelete = true): ActiveQuery
     {
-        $query = parent::find();
-        if ($modeSoftDelete) {
-            $query->andWhere(['deleted_at' => null]);
-        }
+        return new PostQuery(get_called_class());
+    }
 
-        return $query;
+    public function loadDataFromPostForm(PostForm $postForm): void
+    {
+        if (!$postForm->isEdit) {
+            $this->name = $postForm->name;
+            $this->email = $postForm->email;
+        }
+        $this->description = $postForm->description;
+        $this->isEdit = $postForm->isEdit;
+        $this->ip = Yii::$app->request->getUserIP();
+    }
+
+    public function isDelete(): bool
+    {
+        return $this->deleted_at !== null;
     }
 }

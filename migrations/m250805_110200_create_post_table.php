@@ -17,9 +17,10 @@ class m250805_110200_create_post_table extends Migration
             'name' => $this->string(15)->notNull(),
             'email' => $this->string(30)->notNull(),
             'description' => $this->text()->notNull(),
-            'created_at' => $this->dateTime()->notNull(),
-            'updated_at' => $this->dateTime()->notNull(),
-            'deleted_at' => $this->dateTime()->null(),
+            'ip' => $this->string(45)->null(),
+            'created_at' => $this->integer()->notNull(),
+            'updated_at' => $this->integer()->notNull(),
+            'deleted_at' => $this->integer()->null(),
         ]);
     }
 

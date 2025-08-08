@@ -6,8 +6,8 @@ use app\models\Form\PostForm;
 use app\services\PostService;
 use Yii;
 use yii\base\Module;
-use yii\db\Exception;
 use yii\web\Controller;
+use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
 class PostController extends Controller
@@ -22,34 +22,70 @@ class PostController extends Controller
         parent::__construct($id, $module, $config);
     }
 
-    /**
-     * @throws Exception
-     */
-    public function actionIndex(): Response|string
+    public function actionIndex(): string
     {
         $postForm = new PostForm();
-        if ($postForm->load(Yii::$app->request->post()) && $postForm->validate()) {
-            if ($this->postService->save($postForm)) {
-                Yii::$app->session->setFlash('success', 'Данные успешно сохранены!');
-                return $this->redirect(['index']);
-            }
-        } else {
-            // Получаем ошибки валидации
-            $errors = $postForm->getErrors();
-
-            // Можно записать их в сессию для отображения на следующем этапе
-            Yii::$app->session->setFlash('error', $errors);
-
-            // ИЛИ выводим ошибки напрямую
-            foreach ($errors as $error) {
-                foreach ($error as $message) {
-                    echo $message . '<br>'; // Выводим ошибки
-                }
-            }
-        }
+        $posts = $this->postService->findAll();
+        $ipAddresses = $this->postService->findUniqueIPs($posts);
+        $ipCounts = $this->postService->findCountPostsByIp($ipAddresses);
 
         return $this->render('index', [
             'model' => $postForm,
+            'posts' => $posts,
+            'ipCounts' => $ipCounts,
         ]);
+    }
+
+    public function actionCreate(): Response
+    {
+        $postForm = new PostForm();
+
+        if ($postForm->load(Yii::$app->request->post())
+            && $postForm->validate()
+            && $post = $this->postService->createPost($postForm)
+        ) {
+            $this->postService->sendEmailSuccess($post);
+
+            return $this->redirect(['index']);
+        }
+    }
+
+    /**
+     * @throws NotFoundHttpException
+     */
+    public function actionUpdate(int $postId): string
+    {
+        $post = $this->postService->findById($postId);
+
+        $postForm = (new PostForm())
+            ->setModeEdit()
+            ->loadDataFromPost($post);
+
+        return $this->render('edit', [
+            'model' => $postForm,
+        ]);
+    }
+
+    public function actionEdit(int $postId): Response|string
+    {
+        $postForm = (new PostForm())->setModeEdit();
+
+        if ($postForm->load(Yii::$app->request->post())
+            && $postForm->validate()
+            && $this->postService->updatePost($postId, $postForm)
+        ) {
+            return $this->redirect(['update', 'postId' => $postId]);
+        }
+
+        return $this->render('edit', [
+            'model' => $postForm,
+        ]);
+    }
+
+    public function actionDelete(int $postId): Response
+    {
+        $this->postService->deletePost($postId);
+
+        return $this->redirect(['index']);
     }
 }
