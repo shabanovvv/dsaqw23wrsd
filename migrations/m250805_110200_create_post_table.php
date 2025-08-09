@@ -21,7 +21,7 @@ class m250805_110200_create_post_table extends Migration
             'created_at' => $this->integer()->notNull(),
             'updated_at' => $this->integer()->notNull(),
             'deleted_at' => $this->integer()->null(),
-        ]);
+        ], 'CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ENGINE=InnoDB');
     }
 
     /**

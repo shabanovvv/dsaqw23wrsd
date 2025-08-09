@@ -19,7 +19,7 @@ class PostForm extends Model
     {
         return [
             ...PostCommonRules::rules(),
-            //['verifyCode', 'captcha'],
+            ['verifyCode', 'captcha', 'captchaAction' => '/post/captcha'],
         ];
     }
 

@@ -55,6 +55,14 @@ readonly class PostService
         return $ipCounts;
     }
 
+    public function findLastPostByIp(string $ip): ?Post
+    {
+        return Post::find()
+            ->where(['ip' => $ip])
+            ->orderBy(['created_at' => SORT_DESC])
+            ->one();
+    }
+
     public function createPost(PostForm $postForm): ?Post
     {
         $post = new Post();
@@ -139,13 +147,5 @@ readonly class PostService
                 Yii::t('app', 'post_email_error') . ' ' . $e->getMessage()
             );
         }
-    }
-
-    public function findLastPostByIp(string $ip): Post
-    {
-        return Post::find()
-            ->where(['ip' => $ip])
-            ->orderBy(['created_at' => SORT_DESC])
-            ->one();
     }
 }

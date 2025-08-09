@@ -44,6 +44,22 @@ class PostController extends Controller
         ];
     }
 
+    /**
+     * {@inheritdoc}
+     */
+    public function actions(): array
+    {
+        return [
+            'error' => [
+                'class' => 'yii\web\ErrorAction',
+            ],
+            'captcha' => [
+                'class' => 'yii\captcha\CaptchaAction',
+                'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
+            ],
+        ];
+    }
+
     public function actionIndex(): string
     {
         $postForm = new PostForm();

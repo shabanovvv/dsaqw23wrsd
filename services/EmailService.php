@@ -6,10 +6,6 @@ use Yii;
 
 class EmailService
 {
-    public function __construct()
-    {
-    }
-
     public function send(string $emailTo, string $subject, string $message): void
     {
         try {

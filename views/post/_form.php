@@ -27,6 +27,7 @@ $form = ActiveForm::begin([
 <?php endif; ?>
 <?= $form->field($model, 'description')->textarea(['rows' => 6]) ?>
 <?= $form->field($model, 'verifyCode')->widget(Captcha::class, [
+    'captchaAction' => 'post/captcha',
     'template' => '<div class="row"><div class="col-lg-3">{image}</div><div class="col-lg-6">{input}</div></div>',
 ]) ?>
 <div class="form-group">
