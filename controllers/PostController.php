@@ -4,6 +4,9 @@ namespace app\controllers;
 
 use app\models\Form\PostForm;
 use app\services\PostService;
+use app\filters\CreatePostLimitFilter;
+use app\filters\DeletePostLimitFilter;
+use app\filters\EditPostLimitFilter;
 use Yii;
 use yii\base\Module;
 use yii\web\Controller;
@@ -20,6 +23,25 @@ class PostController extends Controller
     )
     {
         parent::__construct($id, $module, $config);
+    }
+
+    public function behaviors(): array
+    {
+        return [
+            'createPostLimit' => [
+                'class' => CreatePostLimitFilter::class,
+                'only' => ['create'],
+                'postService' => $this->postService,
+            ],
+            'editPostLimit' => [
+                'class' => EditPostLimitFilter::class,
+                'only' => ['update', 'edit'],
+            ],
+            'deletePostLimit' => [
+                'class' => DeletePostLimitFilter::class,
+                'only' => ['delete'],
+            ],
+        ];
     }
 
     public function actionIndex(): string

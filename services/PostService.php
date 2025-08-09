@@ -140,4 +140,12 @@ readonly class PostService
             );
         }
     }
+
+    public function findLastPostByIp(string $ip): Post
+    {
+        return Post::find()
+            ->where(['ip' => $ip])
+            ->orderBy(['created_at' => SORT_DESC])
+            ->one();
+    }
 }
