@@ -112,32 +112,11 @@ readonly class PostService
         }
     }
 
+    /**
+     * @throws \Exception
+     */
     public function sendEmailSuccess(Post $post): void
     {
-        try {
-            $editUrl = Yii::$app->urlManager->createAbsoluteUrl(['post/update', 'postId' => $post->id]);
-            $deleteUrl = Yii::$app->urlManager->createAbsoluteUrl(['post/delete', 'postId' => $post->id]);
-
-            $message = "
-                <p>" . Yii::t('app', 'post_email__saved_success') . "</p>
-                <p><strong>" . Yii::t('app', 'post_email_author', ['name' => htmlspecialchars($post->name)]) . "</strong></p>
-                <p><strong>" . Yii::t('app', 'post_email_message', ['description' => htmlspecialchars($post->description)]) . "</strong></p>
-                <p>
-                    <a href=\"{$editUrl}\">" . Yii::t('app', 'post_email_edit_post') . "</a> | 
-                    <a href=\"{$deleteUrl}\" style=\"color:red;\">" . Yii::t('app', 'post_email_delete_post') . "</a>
-                </p>
-            ";
-
-            $this->emailService->send(
-                $post->email,
-                Yii::t('app', 'post_email_subject'),
-                $message
-            );
-        } catch(\Exception $e) {
-            Yii::$app->session->setFlash(
-                'error',
-                Yii::t('app', 'post_email_error') . ' ' . $e->getMessage()
-            );
-        }
+        $this->emailService->sendPostSaved($post);
     }
 }
