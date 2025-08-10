@@ -7,6 +7,8 @@ use app\services\PostService;
 use app\filters\CreatePostLimitFilter;
 use app\filters\DeletePostLimitFilter;
 use app\filters\EditPostLimitFilter;
+use app\exceptions\ValidationException;
+use DomainException;
 use Yii;
 use yii\base\Module;
 use yii\web\Controller;
@@ -64,8 +66,7 @@ class PostController extends Controller
     {
         $postForm = new PostForm();
         $posts = $this->postService->findAll();
-        $ipAddresses = $this->postService->findUniqueIPs($posts);
-        $ipCounts = $this->postService->findCountPostsByIp($ipAddresses);
+        $ipCounts = $this->postService->findCountPosts($posts);
 
         return $this->render('index', [
             'model' => $postForm,
@@ -80,11 +81,21 @@ class PostController extends Controller
 
         if ($postForm->load(Yii::$app->request->post())
             && $postForm->validate()
-            && $post = $this->postService->createPost($postForm)
         ) {
-            $this->postService->sendEmailSuccess($post);
+            try {
+                $post = $this->postService->createPostFromForm($postForm);
 
-            return $this->redirect(['index']);
+                Yii::$app->session->setFlash('success', Yii::t('app', 'post_save_success'));
+
+                $this->postService->sendEmailSuccess($post);
+
+                return $this->redirect(['index']);
+            } catch (ValidationException $e) {
+                Yii::$app->session->setFlash('error', $e->getErrors());
+            } catch (\Throwable $e) {
+                Yii::error($e->getMessage(), __METHOD__);
+                Yii::$app->session->setFlash('error', Yii::t('app', 'post_save_failed'));
+            }
         }
     }
 
@@ -106,13 +117,24 @@ class PostController extends Controller
 
     public function actionEdit(int $postId): Response|string
     {
-        $postForm = (new PostForm())->setModeEdit();
+        $postForm = (new PostForm())
+            ->setModeEdit();
 
         if ($postForm->load(Yii::$app->request->post())
             && $postForm->validate()
-            && $this->postService->updatePost($postId, $postForm)
         ) {
-            return $this->redirect(['update', 'postId' => $postId]);
+            try {
+                $this->postService->updatePost($postId, $postForm);
+
+                Yii::$app->session->setFlash('success', Yii::t('app', 'post_save_success'));
+
+                return $this->redirect(['index']);
+            } catch (ValidationException $e) {
+                Yii::$app->session->setFlash('error', $e->getErrors());
+            } catch (\Throwable $e) {
+                Yii::error($e->getMessage(), __METHOD__);
+                Yii::$app->session->setFlash('error', Yii::t('app', 'post_save_failed'));
+            }
         }
 
         return $this->render('edit', [
@@ -122,7 +144,15 @@ class PostController extends Controller
 
     public function actionDelete(int $postId): Response
     {
-        $this->postService->deletePost($postId);
+        try {
+            $this->postService->deletePost($postId);
+            Yii::$app->session->setFlash('success', Yii::t('app', 'post_delete_success'));
+        } catch (DomainException $e) {
+            Yii::$app->session->setFlash('error', $e->getMessage());
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage(), __METHOD__);
+            Yii::$app->session->setFlash('error', Yii::t('app', 'post_delete_failed'));
+        }
 
         return $this->redirect(['index']);
     }

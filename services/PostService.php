@@ -4,6 +4,9 @@ namespace app\services;
 
 use app\models\Form\PostForm;
 use app\models\Post;
+use app\repository\PostRepository;
+use app\exceptions\ValidationException;
+use DomainException;
 use Yii;
 use yii\db\Exception;
 use yii\db\StaleObjectException;
@@ -11,8 +14,10 @@ use yii\web\NotFoundHttpException;
 
 readonly class PostService
 {
-    public function __construct(private EmailService $emailService)
-    {
+    public function __construct(
+        private EmailService $emailService,
+        private PostRepository $postRepository,
+    ) {
     }
 
     /**
@@ -20,8 +25,8 @@ readonly class PostService
      */
     public function findById(int $postId): Post
     {
-        $post = Post::findOne($postId);
-        if (!$post) {
+        $post = $this->postRepository->findById($postId);
+        if ($post === null) {
             throw new NotFoundHttpException(Yii::t('app', 'post_not_exist'));
         }
 
@@ -30,22 +35,13 @@ readonly class PostService
 
     public function findAll(): array
     {
-        return Post::find()->all();
+        return $this->postRepository->findAll();
     }
 
-    public function findUniqueIPs(array $posts): array
+    public function findCountPosts(array $posts): array
     {
-        return array_unique(array_column($posts, 'ip'));
-    }
-
-    public function findCountPostsByIp(array $ip): array
-    {
-        $posts = Post::find(true)
-            ->select(['ip', 'COUNT(id) AS count'])
-            ->groupBy('ip')
-            ->where(['in', 'ip', $ip])
-            ->asArray()
-            ->all();
+        $ipAddresses = $this->findUniqueIPs($posts);
+        $posts = $this->postRepository->findCountPostsByIp($ipAddresses);
 
         $ipCounts = [];
         foreach ($posts as $post) {
@@ -55,50 +51,51 @@ readonly class PostService
         return $ipCounts;
     }
 
-    public function findLastPostByIp(string $ip): ?Post
+    private function findUniqueIPs(array $posts): array
     {
-        return Post::find()
-            ->where(['ip' => $ip])
-            ->orderBy(['created_at' => SORT_DESC])
-            ->one();
+        return array_unique(array_column($posts, 'ip'));
     }
 
-    public function createPost(PostForm $postForm): ?Post
+    public function findLastPostByIp(string $ip): ?Post
+    {
+        return $this->postRepository->findLastPostByIp($ip);
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function createPostFromForm(PostForm $postForm): Post
     {
         $post = new Post();
         $post->loadDataFromPostForm($postForm);
 
-        if (!$post->save()) {
+        if (!$this->postRepository->save($post)) {
             $errorsSummary = [];
-            foreach($post->errors as $key => $errors) {
-                $errorsSummary[$key] = implode(', ', $errors);
+            foreach ($post->getErrors() as $attribute => $errors) {
+                $errorsSummary[$attribute] = implode(', ', $errors);
             }
-            Yii::$app->session->setFlash('error', $errorsSummary);
-
-            return null;
+            throw new ValidationException($errorsSummary);
         }
-
-        Yii::$app->session->setFlash('success', Yii::t('app', 'post_save_success'));
 
         return $post;
     }
 
+    /**
+     * @throws Exception
+     * @throws NotFoundHttpException
+     */
     public function updatePost(int $postId, PostForm $postForm): bool
     {
         $post = $this->findById($postId);
         $post->loadDataFromPostForm($postForm);
 
-        if (!$post->save()) {
+        if (!$this->postRepository->save($post)) {
             $errorsSummary = [];
             foreach($post->errors as $key => $errors) {
                 $errorsSummary[$key] = implode(', ', $errors);
             }
-            Yii::$app->session->setFlash('error', $errorsSummary);
-
-            return false;
+            throw new ValidationException($errorsSummary);
         }
-
-        Yii::$app->session->setFlash('success', Yii::t('app', 'post_save_success'));
 
         return true;
     }
@@ -110,13 +107,8 @@ readonly class PostService
      */
     public function deletePost(int $postId): void
     {
-        $post = $this->findById($postId);
-        $post->delete();
-
-        if ($post->isDelete() !== null) {
-            Yii::$app->session->setFlash('success', Yii::t('app', 'post_delete_success'));
-        } else {
-            Yii::$app->session->setFlash('error', implode(', ', $post->getErrors()));
+        if (!$this->postRepository->delete($postId)) {
+            throw new DomainException('Unable to delete post from database');
         }
     }
 

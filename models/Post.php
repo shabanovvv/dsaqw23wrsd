@@ -50,7 +50,7 @@ class Post extends ActiveRecord
     /**
      * @inheritdoc
      */
-    public static function find($modeSoftDelete = true): ActiveQuery
+    public static function find(): ActiveQuery
     {
         return new PostQuery(get_called_class());
     }
