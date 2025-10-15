@@ -2,7 +2,9 @@
 
 /** @var yii\web\View $this */
 /** @var yii\bootstrap5\ActiveForm $form */
-/** @var \app\models\Form\PostForm $model */
+/** @var \app\models\Form\PostBaseForm $model */
+
+use yii\widgets\LinkPager;
 
 $this->title = 'My Yii Application';
 ?>
@@ -22,6 +24,7 @@ $this->title = 'My Yii Application';
                                     'ipCounts' => $ipCounts,
                                 ]) ?>
                             <?php endforeach; ?>
+                            <?= LinkPager::widget(['pagination' => $pagination]) ?>
                         <?php else: ?>
                             <p>Нет сообщений.</p>
                         <?php endif; ?>
@@ -31,6 +34,7 @@ $this->title = 'My Yii Application';
             <div class="col-lg-4 mb-3">
                 <?= $this->render('_form', [
                     'model' => $model,
+                    'isEdit' => false,
                     'action' => ['post/create'],
                 ]) ?>
             </div>

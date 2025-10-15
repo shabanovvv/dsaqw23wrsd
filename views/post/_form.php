@@ -1,7 +1,7 @@
 <?php
 /** @var yii\web\View $this */
 /** @var yii\bootstrap5\ActiveForm $form */
-/** @var \app\models\Form\PostForm $model */
+/** @var \app\models\Form\PostBaseForm $model */
 
 use yii\bootstrap5\ActiveForm;
 use yii\bootstrap5\Html;
@@ -12,7 +12,7 @@ $form = ActiveForm::begin([
     'id' => 'post-form'
 ]); ?>
 
-<?php if (!$model->isEdit): ?>
+<?php if (!$isEdit): ?>
     <?= $form->field($model, 'name')->textInput() ?>
     <?= $form->field($model, 'email')->textInput() ?>
 <?php else: ?>

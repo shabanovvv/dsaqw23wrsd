@@ -55,6 +55,18 @@ $config = [
         ],
     ],
     'params' => $params,
+    'container' => [
+        'definitions' => [
+            app\events\dispatcher\EventDispatcher::class => function() {
+                $dispatcher = new app\events\dispatcher\EventDispatcher();
+                $dispatcher->addListener(
+                    app\events\PostCreatedEvent::class,
+                    [new app\listeners\SendPostCreatedEmailListener(Yii::$container->get(app\services\EmailService::class)), 'handle']
+                );
+                return $dispatcher;
+            },
+        ],
+    ],
 ];
 
 if (YII_ENV_DEV) {

@@ -2,7 +2,10 @@
 
 namespace app\services;
 
-use app\models\Form\PostForm;
+use app\events\dispatcher\EventDispatcher;
+use app\events\PostCreatedEvent;
+use app\exceptions\EntityNotFoundException;
+use app\models\Form\PostBaseForm;
 use app\models\Post;
 use app\repository\PostRepository;
 use app\exceptions\ValidationException;
@@ -15,8 +18,8 @@ use yii\web\NotFoundHttpException;
 readonly class PostService
 {
     public function __construct(
-        private EmailService $emailService,
         private PostRepository $postRepository,
+        private EventDispatcher $dispatcher,
     ) {
     }
 
@@ -27,7 +30,7 @@ readonly class PostService
     {
         $post = $this->postRepository->findById($postId);
         if ($post === null) {
-            throw new NotFoundHttpException(Yii::t('app', 'post_not_exist'));
+            throw new EntityNotFoundException(Yii::t('app', 'post_not_exist'));
         }
 
         return $post;
@@ -36,6 +39,11 @@ readonly class PostService
     public function findAll(): array
     {
         return $this->postRepository->findAll();
+    }
+
+    public function findAllPaginated(int $pageSize = 10): array
+    {
+        return $this->postRepository->findAllWithPagination($pageSize);
     }
 
     public function findCountPosts(array $posts): array
@@ -64,9 +72,10 @@ readonly class PostService
     /**
      * @throws Exception
      */
-    public function createPostFromForm(PostForm $postForm): Post
+    public function createPostFromForm(PostBaseForm $postForm, string $ip): Post
     {
         $post = new Post();
+        $post->ip = $ip;
         $post->loadDataFromPostForm($postForm);
 
         if (!$this->postRepository->save($post)) {
@@ -76,6 +85,7 @@ readonly class PostService
             }
             throw new ValidationException($errorsSummary);
         }
+        $this->dispatcher->dispatch(new PostCreatedEvent($post));
 
         return $post;
     }
@@ -84,7 +94,7 @@ readonly class PostService
      * @throws Exception
      * @throws NotFoundHttpException
      */
-    public function updatePost(int $postId, PostForm $postForm): bool
+    public function updatePost(int $postId, PostBaseForm $postForm): bool
     {
         $post = $this->findById($postId);
         $post->loadDataFromPostForm($postForm);
@@ -110,13 +120,5 @@ readonly class PostService
         if (!$this->postRepository->delete($postId)) {
             throw new DomainException('Unable to delete post from database');
         }
-    }
-
-    /**
-     * @throws \Exception
-     */
-    public function sendEmailSuccess(Post $post): void
-    {
-        $this->emailService->sendPostSaved($post);
     }
 }

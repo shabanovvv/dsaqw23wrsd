@@ -4,6 +4,7 @@ namespace app\repository;
 
 use app\models\Post;
 use Yii;
+use yii\data\Pagination;
 use yii\db\Exception;
 use yii\db\StaleObjectException;
 use yii\web\NotFoundHttpException;
@@ -21,6 +22,24 @@ class PostRepository
     public function findAll(): array
     {
         return Post::find()->all();
+    }
+
+    public function findAllWithPagination(int $pageSize = 10): array
+    {
+        $query = Post::find()->orderBy(['created_at' => SORT_DESC]);
+
+        $pagination = new Pagination([
+            'totalCount' => $query->count(),
+            'pageSize' => $pageSize,
+            'pageSizeParam' => false,
+        ]);
+
+        $posts = $query
+            ->offset($pagination->offset)
+            ->limit($pagination->limit)
+            ->all();
+
+        return [$posts, $pagination];
     }
 
     public function findCountPostsByIp(array $ip): array

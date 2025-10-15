@@ -3,16 +3,14 @@
 namespace app\models;
 
 use app\components\SoftDeleteBehavior;
-use app\models\Form\PostForm;
+use app\models\Form\PostBaseForm;
 use app\models\Query\PostQuery;
-use Yii;
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
 
 class Post extends ActiveRecord
 {
-    public bool $isEdit = false;
 
     /**
      * @inheritdoc
@@ -42,7 +40,11 @@ class Post extends ActiveRecord
     public function rules(): array
     {
         return [
-            ...PostCommonRules::rules(),
+            [['name', 'email', 'description'], 'required'],
+            ['email', 'email'],
+            ['name', 'string', 'min' => 2, 'max' => 15],
+            ['description', 'trim'],
+            ['description', 'string', 'min' => 5, 'max' => 255],
             [['ip'], 'ip'],
         ];
     }
@@ -55,15 +57,13 @@ class Post extends ActiveRecord
         return new PostQuery(get_called_class());
     }
 
-    public function loadDataFromPostForm(PostForm $postForm): void
+    public function loadDataFromPostForm(PostBaseForm $postForm): void
     {
         if (!$postForm->isEdit) {
             $this->name = $postForm->name;
             $this->email = $postForm->email;
         }
         $this->description = $postForm->description;
-        $this->isEdit = $postForm->isEdit;
-        $this->ip = Yii::$app->request->getUserIP();
     }
 
     public function isDelete(): bool

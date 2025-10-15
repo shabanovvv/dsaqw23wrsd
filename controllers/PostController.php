@@ -2,7 +2,9 @@
 
 namespace app\controllers;
 
-use app\models\Form\PostForm;
+use app\exceptions\EntityNotFoundException;
+use app\models\Form\PostCreateForm;
+use app\models\Form\PostEditForm;
 use app\services\PostService;
 use app\filters\CreatePostLimitFilter;
 use app\filters\DeletePostLimitFilter;
@@ -64,39 +66,44 @@ class PostController extends Controller
 
     public function actionIndex(): string
     {
-        $postForm = new PostForm();
-        $posts = $this->postService->findAll();
+        $postForm = new PostCreateForm();
+        [$posts, $pagination] = $this->postService->findAllPaginated(5);
         $ipCounts = $this->postService->findCountPosts($posts);
 
         return $this->render('index', [
             'model' => $postForm,
             'posts' => $posts,
             'ipCounts' => $ipCounts,
+            'pagination' => $pagination,
         ]);
     }
 
     public function actionCreate(): Response
     {
-        $postForm = new PostForm();
+        $postForm = new PostCreateForm();
 
         if ($postForm->load(Yii::$app->request->post())
             && $postForm->validate()
         ) {
             try {
-                $post = $this->postService->createPostFromForm($postForm);
+                $post = $this->postService->createPostFromForm(
+                    $postForm,
+                    Yii::$app->request->getUserIP()
+                );
 
                 Yii::$app->session->setFlash('success', Yii::t('app', 'post_save_success'));
-
-                $this->postService->sendEmailSuccess($post);
 
                 return $this->redirect(['index']);
             } catch (ValidationException $e) {
                 Yii::$app->session->setFlash('error', $e->getErrors());
             } catch (\Throwable $e) {
                 Yii::error($e->getMessage(), __METHOD__);
+                throw $e; // временно, чтобы увидеть стек
                 Yii::$app->session->setFlash('error', Yii::t('app', 'post_save_failed'));
             }
         }
+
+        return $this->redirect(['index']);
     }
 
     /**
@@ -104,10 +111,13 @@ class PostController extends Controller
      */
     public function actionUpdate(int $postId): string
     {
-        $post = $this->postService->findById($postId);
+        try {
+            $post = $this->postService->findById($postId);
+        } catch (EntityNotFoundException $e) {
+            throw new NotFoundHttpException($e->getMessage());
+        }
 
-        $postForm = (new PostForm())
-            ->setModeEdit()
+        $postForm = (new PostEditForm())
             ->loadDataFromPost($post);
 
         return $this->render('edit', [
@@ -117,8 +127,7 @@ class PostController extends Controller
 
     public function actionEdit(int $postId): Response|string
     {
-        $postForm = (new PostForm())
-            ->setModeEdit();
+        $postForm = new PostEditForm();
 
         if ($postForm->load(Yii::$app->request->post())
             && $postForm->validate()
