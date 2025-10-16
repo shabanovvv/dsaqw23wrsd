@@ -11,12 +11,18 @@ use app\filters\DeletePostLimitFilter;
 use app\filters\EditPostLimitFilter;
 use app\exceptions\ValidationException;
 use DomainException;
+use Throwable;
 use Yii;
 use yii\base\Module;
+use yii\db\Exception;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
+/**
+ * Контроллер для CRUD-операций с постами.
+ * Использует PostService для бизнес-логики.
+ */
 class PostController extends Controller
 {
     public function __construct(
@@ -29,6 +35,11 @@ class PostController extends Controller
         parent::__construct($id, $module, $config);
     }
 
+    /**
+     * Ограничения на частоту создания, редактирования и удаления постов.
+     *
+     * @return array[]
+     */
     public function behaviors(): array
     {
         return [
@@ -50,6 +61,9 @@ class PostController extends Controller
 
     /**
      * {@inheritdoc}
+     * Системные действия — ошибки и капча.
+     *
+     * @return array
      */
     public function actions(): array
     {
@@ -64,10 +78,15 @@ class PostController extends Controller
         ];
     }
 
+    /**
+     * Главная страница — список постов с пагинацией и формой создания.
+     *
+     * @return string
+     */
     public function actionIndex(): string
     {
         $postForm = new PostCreateForm();
-        [$posts, $pagination] = $this->postService->findAllPaginated(5);
+        [$posts, $pagination] = $this->postService->findAllPaginated();
         $ipCounts = $this->postService->findCountPosts($posts);
 
         return $this->render('index', [
@@ -78,6 +97,12 @@ class PostController extends Controller
         ]);
     }
 
+    /**
+     * Создание нового поста.
+     *
+     * @return Response
+     * @throws Throwable
+     */
     public function actionCreate(): Response
     {
         $postForm = new PostCreateForm();
@@ -96,10 +121,8 @@ class PostController extends Controller
                 return $this->redirect(['index']);
             } catch (ValidationException $e) {
                 Yii::$app->session->setFlash('error', $e->getErrors());
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 Yii::error($e->getMessage(), __METHOD__);
-                throw $e; // временно, чтобы увидеть стек
-                Yii::$app->session->setFlash('error', Yii::t('app', 'post_save_failed'));
             }
         }
 
@@ -107,6 +130,10 @@ class PostController extends Controller
     }
 
     /**
+     * Загрузка формы редактирования поста.
+     *
+     * @param int $postId
+     * @return string
      * @throws NotFoundHttpException
      */
     public function actionUpdate(int $postId): string
@@ -125,6 +152,12 @@ class PostController extends Controller
         ]);
     }
 
+    /**
+     * Обновление существующего поста.
+     *
+     * @param int $postId
+     * @return Response|string
+     */
     public function actionEdit(int $postId): Response|string
     {
         $postForm = new PostEditForm();
@@ -140,9 +173,8 @@ class PostController extends Controller
                 return $this->redirect(['index']);
             } catch (ValidationException $e) {
                 Yii::$app->session->setFlash('error', $e->getErrors());
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 Yii::error($e->getMessage(), __METHOD__);
-                Yii::$app->session->setFlash('error', Yii::t('app', 'post_save_failed'));
             }
         }
 
@@ -151,6 +183,12 @@ class PostController extends Controller
         ]);
     }
 
+    /**
+     * Удаление поста по ID.
+     *
+     * @param int $postId
+     * @return Response
+     */
     public function actionDelete(int $postId): Response
     {
         try {
@@ -158,9 +196,8 @@ class PostController extends Controller
             Yii::$app->session->setFlash('success', Yii::t('app', 'post_delete_success'));
         } catch (DomainException $e) {
             Yii::$app->session->setFlash('error', $e->getMessage());
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Yii::error($e->getMessage(), __METHOD__);
-            Yii::$app->session->setFlash('error', Yii::t('app', 'post_delete_failed'));
         }
 
         return $this->redirect(['index']);

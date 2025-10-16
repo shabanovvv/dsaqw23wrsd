@@ -4,10 +4,15 @@ namespace app\filters;
 
 use app\models\Post;
 use app\services\PostService;
+use HttpException;
 use Yii;
 use yii\base\ActionFilter;
 use yii\web\TooManyRequestsHttpException;
 
+/**
+ * Фильтр ограничивает частоту создания постов.
+ * Не позволяет отправлять сообщения чаще, чем раз в TIME_LIMIT секунд.
+ */
 class CreatePostLimitFilter extends ActionFilter
 {
     const TIME_LIMIT = 180;
@@ -15,8 +20,12 @@ class CreatePostLimitFilter extends ActionFilter
     public PostService $postService;
 
     /**
-     * @throws \HttpException
+     * Проверяет, прошло ли достаточно времени с последнего поста пользователя.
+     *
+     * @param $action
+     * @return bool
      * @throws TooManyRequestsHttpException
+     * @throws HttpException
      */
     public function beforeAction($action): bool
     {
@@ -36,7 +45,7 @@ class CreatePostLimitFilter extends ActionFilter
                     throw new TooManyRequestsHttpException($message);
                 }
 
-                throw new \HttpException(429, $message);
+                throw new HttpException(429, $message);
             }
         }
 

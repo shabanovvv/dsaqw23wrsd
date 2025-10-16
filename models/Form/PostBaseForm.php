@@ -5,15 +5,24 @@ namespace app\models\Form;
 use app\models\Post;
 use yii\base\Model;
 
+/**
+ * Базовая форма для постов.
+ * Содержит общие поля и логику для создания и редактирования.
+ */
 class PostBaseForm extends Model
 {
-    /** @var int */
+    /** @var int ID поста */
     public $id;
-    /** @var string */
+    /** @var string Текст сообщения */
     public $description = '';
-    /** @var bool */
+    /** @var bool Флаг, указывающий, что форма используется для редактирования */
     public $isEdit = false;
 
+    /**
+     * Правила валидации описания поста.
+     *
+     * @return array
+     */
     public function rules(): array
     {
         return [
@@ -23,6 +32,12 @@ class PostBaseForm extends Model
         ];
     }
 
+    /**
+     * Загружает данные из модели Post в форму.
+     *
+     * @param Post $post
+     * @return $this
+     */
     public function loadDataFromPost(Post $post): self
     {
         $this->id = $post->id;

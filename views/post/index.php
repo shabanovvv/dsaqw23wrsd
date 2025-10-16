@@ -1,9 +1,21 @@
 <?php
 
-/** @var yii\web\View $this */
-/** @var yii\bootstrap5\ActiveForm $form */
-/** @var \app\models\Form\PostBaseForm $model */
+/**
+ * Главная страница приложения.
+ *
+ * @var View $this
+ * @var ActiveForm $form
+ * @var PostBaseForm $model
+ * @var Pagination $pagination
+ * @var Post[] $posts
+ * @var array $ipCounts
+ */
 
+use yii\web\View;
+use yii\bootstrap5\ActiveForm;
+use app\models\Form\PostBaseForm;
+use app\models\Post;
+use yii\data\Pagination;
 use yii\widgets\LinkPager;
 
 $this->title = 'My Yii Application';

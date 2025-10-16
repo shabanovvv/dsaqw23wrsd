@@ -4,26 +4,31 @@ namespace app\models\Query;
 
 use yii\db\ActiveQuery;
 
+/**
+ * Кастомный запрос для модели Post.
+ * Добавляет автоматическую фильтрацию по soft delete.
+ */
 class PostQuery extends ActiveQuery
 {
-    public function softDelete(): self
+    /**
+     *  Инициализация запроса.
+     *  По умолчанию исключает записи с deleted_at != null.
+     *
+     * @return void
+     */
+    public function init(): void
     {
+        parent::init();
         $this->andWhere(['deleted_at' => null]);
-
-        return $this;
     }
 
-    public function all($db = null): array
+    /**
+     * Возвращает записи, отмеченные как удалённые (soft delete).
+     *
+     * @return self
+     */
+    public function withoutSoftDelete(): self
     {
-        $this->softDelete();
-
-        return parent::all($db);
-    }
-
-    public function one($db = null)
-    {
-        $this->softDelete();
-
-        return parent::one($db);
+        return $this->andWhere(['not', ['deleted_at' => null]]);
     }
 }

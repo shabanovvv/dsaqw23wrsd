@@ -1,10 +1,15 @@
 <?php
 
-/** @var yii\web\View $this */
-/** @var string $name */
-/** @var string $message */
-/** @var Exception $exception */
+/**
+ * Шаблон отображения ошибок.
+ *
+ * @var View $this
+ * @var string $name Название ошибки
+ * @var string $message Сообщение об ошибке
+ * @var Exception $exception Объект исключения
+ */
 
+use yii\web\View;
 use yii\helpers\Html;
 
 $this->title = $name;

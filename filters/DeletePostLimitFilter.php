@@ -9,12 +9,19 @@ use yii\base\InvalidConfigException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 
+/**
+ * Фильтр ограничивает возможность удаления поста.
+ * Разрешено только в течение 14 дней после публикации.
+ */
 class DeletePostLimitFilter extends ActionFilter
 {
     /**
-     * @throws InvalidConfigException
-     * @throws NotFoundHttpException
+     * Проверяет, можно ли удалить пост.
+     *
+     * @param $action
+     * @return bool
      * @throws ForbiddenHttpException
+     * @throws NotFoundHttpException
      */
     public function beforeAction($action): bool
     {

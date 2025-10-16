@@ -8,11 +8,19 @@ use yii\base\ActionFilter;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 
+/**
+ * Фильтр ограничивает редактирование поста.
+ * Разрешено только в течение 12 часов после создания.
+ */
 class EditPostLimitFilter extends ActionFilter
 {
     /**
-     * @throws NotFoundHttpException
+     * Проверяет, можно ли редактировать пост.
+     *
+     * @param $action
+     * @return bool
      * @throws ForbiddenHttpException
+     * @throws NotFoundHttpException
      */
     public function beforeAction($action): bool
     {

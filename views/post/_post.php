@@ -1,6 +1,15 @@
 <?php
+/**
+ * Карточка одного поста.
+ *
+ * @var View $this
+ * @var Post $post
+ * @var array $ipCounts Количество постов с того же IP
+ */
 
 use app\components\TextHelper;
+use yii\web\View;
+use app\models\Post;
 use yii\helpers\HtmlPurifier;
 
 ?>

@@ -1,13 +1,17 @@
 <?php
 
-/** @var yii\web\View $this */
-/** @var string $content */
+/**
+ * Главный шаблон приложения.
+ *
+ * @var View $this Текущий объект представления
+ * @var string $content Основной контент страницы
+ */
 
+use yii\web\View;
 use app\assets\AppAsset;
 use app\widgets\Alert;
 use yii\bootstrap5\Breadcrumbs;
 use yii\bootstrap5\Html;
-use yii\bootstrap5\Nav;
 use yii\bootstrap5\NavBar;
 
 AppAsset::register($this);

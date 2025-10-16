@@ -1,9 +1,17 @@
 <?php
-/** @var yii\web\View $this */
-/** @var yii\bootstrap5\ActiveForm $form */
-/** @var \app\models\Form\PostBaseForm $model */
+/**
+ * Форма создания или редактирования поста.
+ *
+ * @var View $this
+ * @var ActiveForm $form
+ * @var PostBaseForm $model
+ * @var array $action Маршрут для отправки формы
+ * @var bool $isEdit Флаг режима редактирования
+ */
 
+use yii\web\View;
 use yii\bootstrap5\ActiveForm;
+use app\models\Form\PostBaseForm;
 use yii\bootstrap5\Html;
 use yii\captcha\Captcha;
 
@@ -25,6 +33,7 @@ $form = ActiveForm::begin([
         <div class="form-control-plaintext"><?= Html::encode($model->email) ?></div>
     </div>
 <?php endif; ?>
+
 <?= $form->field($model, 'description')->textarea(['rows' => 6]) ?>
 <?= $form->field($model, 'verifyCode')->widget(Captcha::class, [
     'captchaAction' => 'post/captcha',

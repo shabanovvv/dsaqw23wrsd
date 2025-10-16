@@ -9,11 +9,20 @@ use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
 
+/**
+ * Модель Post — сущность поста (сообщения).
+ * Поддерживает soft delete и автоматические временные метки.
+ */
 class Post extends ActiveRecord
 {
 
     /**
      * @inheritdoc
+     * Поведения модели:
+     * - SoftDeleteBehavior — мягкое удаление через поле deleted_at
+     * - TimestampBehavior — установка created_at и updated_at
+ *
+     * @return array[]
      */
     public function behaviors(): array
     {
@@ -32,11 +41,21 @@ class Post extends ActiveRecord
         ];
     }
 
+    /**
+     * Имя таблицы в БД.
+     *
+     * @return string
+     */
     public static function tableName(): string
     {
         return 'post';
     }
 
+    /**
+     * Правила валидации для полей модели.
+     *
+     * @return array
+     */
     public function rules(): array
     {
         return [
@@ -50,13 +69,22 @@ class Post extends ActiveRecord
     }
 
     /**
-     * @inheritdoc
+     * Используем свой кастомный запрос с фильтром soft delete.
+     *
+     * @return ActiveQuery
      */
     public static function find(): ActiveQuery
     {
         return new PostQuery(get_called_class());
     }
 
+    /**
+     * Заполняет модель данными из формы.
+     * При редактировании не обновляет имя и email.
+     *
+     * @param PostBaseForm $postForm
+     * @return void
+     */
     public function loadDataFromPostForm(PostBaseForm $postForm): void
     {
         if (!$postForm->isEdit) {
@@ -66,6 +94,11 @@ class Post extends ActiveRecord
         $this->description = $postForm->description;
     }
 
+    /**
+     * Проверяет, помечен ли пост как удалённый.
+     *
+     * @return bool
+     */
     public function isDelete(): bool
     {
         return $this->deleted_at !== null;
